@@ -5,12 +5,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import '../global.css';
 
 import { useColorScheme } from '@/components/useColorScheme';
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
@@ -45,8 +46,22 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+
+import AdInterstitial from '@/components/AdInterstitial';
+import { useState } from 'react';
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const [showAd, setShowAd] = useState(false);
+
+  useEffect(() => {
+    // Show ad after 60 seconds (60000ms)
+    const timer = setTimeout(() => {
+      setShowAd(true);
+    }, 60000); // 1 minute
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -54,6 +69,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
+      <AdInterstitial visible={showAd} onClose={() => setShowAd(false)} />
     </ThemeProvider>
   );
 }
