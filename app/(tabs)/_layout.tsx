@@ -35,6 +35,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="mosques"
+        options={{
+          title: 'Camiler',
+          tabBarLabel: 'Camiler',
+          tabBarIcon: ({ color }) => <TabBarIcon name="map-marker" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="qibla"
         options={{
           title: 'Kıble',

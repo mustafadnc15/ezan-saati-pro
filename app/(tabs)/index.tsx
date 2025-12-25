@@ -208,6 +208,9 @@ export default function HomeScreen() {
 
 
 
+
+
+
           <View className="mb-6">
             <AdBanner />
           </View>

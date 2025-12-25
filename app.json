@@ -27,7 +27,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.mustafa.dnc26.ezanvaktireact"
+      "package": "com.mustafa.dnc26.ezanvaktireact",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_ANDROID_API_KEY"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
