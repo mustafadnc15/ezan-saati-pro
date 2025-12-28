@@ -16,7 +16,7 @@ const withGoogleMaps = (config) => {
 
         const googleMapsPods = `
   # Google Maps 
-  pod 'react-native-google-maps', :path => node_modules_path + '/react-native-maps'
+  pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
   pod 'GoogleMaps'
   pod 'Google-Maps-iOS-Utils'
 `;
