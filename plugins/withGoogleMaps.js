@@ -3,12 +3,6 @@ const { withPodfile } = require('@expo/config-plugins');
 const withGoogleMaps = (config) => {
     return withPodfile(config, (config) => {
         const podfile = config.modResults.contents;
-        const targetPod = "pod 'react-native-google-maps', :path => node_modules_path + '/react-native-maps'";
-
-        // Check if valid to add
-        if (podfile.includes(targetPod)) {
-            return config;
-        }
 
         // Anchors to inject after. Try to match standard Expo or RN anchors.
         // "use_expo_modules!" is common in Expo managed projects.
@@ -16,7 +10,6 @@ const withGoogleMaps = (config) => {
 
         const googleMapsPods = `
   # Google Maps 
-  pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
   pod 'GoogleMaps'
   pod 'Google-Maps-iOS-Utils'
 `;
