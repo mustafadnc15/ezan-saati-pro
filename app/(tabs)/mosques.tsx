@@ -1,9 +1,10 @@
+import { onlyMosquesStyle } from '@/constants/mapStyles';
 import { usePrayerStore } from '@/store/prayerStore';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -65,13 +66,16 @@ export default function MosquesScreen() {
         );
     }
 
+
+
     return (
         <View className="flex-1 bg-gray-900 relative">
             {mapRegion ? (
                 <MapView
                     style={styles.map}
-                    // Use Google Maps on Android (requires key), Default (Apple Maps) on iOS (no key required)
-                    provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+                    // Use Google Maps on both Android and iOS
+                    provider={PROVIDER_GOOGLE}
+                    customMapStyle={onlyMosquesStyle}
                     region={mapRegion}
                     showsUserLocation={true}
                     showsMyLocationButton={true}

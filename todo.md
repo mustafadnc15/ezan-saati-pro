@@ -1,5 +1,5 @@
-1. bildirim butonu kaldırılacak
-2. ezan sesi süre düşülecek
-3. bildirims esi değiştirme seçeneği eklenecek
-4. tam ekran reklam id eklenecek
-5. en yakın camileri gösterme özelliği eklenecek
+1. haritada sadece camiler gözükecek
+2. konum doğrudan şehir göstersin
+3. bildirim sesi değiştirme seçeneği eklenecek
+4. 
+5. 

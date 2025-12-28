@@ -18,6 +18,9 @@
       "bundleIdentifier": "com.mustafa.dnc26.ezanvaktireact",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyAc-Eaj5jYMN91S3tyG3Oh0hKRhshsU5Qk"
       }
     },
     "android": {
@@ -30,7 +33,7 @@
       "package": "com.mustafa.dnc26.ezanvaktireact",
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_ANDROID_API_KEY"
+          "apiKey": "AIzaSyAc-Eaj5jYMN91S3tyG3Oh0hKRhshsU5Qk"
         }
       }
     },
@@ -47,7 +50,15 @@
           "androidAppId": "ca-app-pub-7272302945895997~3652949677",
           "iosAppId": "ca-app-pub-7272302945895997~5157603030"
         }
-      ]
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7272302945895997~3652949677",
+          "iosAppId": "ca-app-pub-7272302945895997~5157603030"
+        }
+      ],
+      "./plugins/withGoogleMaps"
     ],
     "experiments": {
       "typedRoutes": true
