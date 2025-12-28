@@ -1,3 +1,4 @@
+import { SoundType, useSettingsStore } from '@/store/settingsStore';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -39,19 +40,36 @@ if (Notifications) {
     }
 }
 
-export async function registerForPushNotificationsAsync() {
+export async function registerForPushNotificationsAsync(preferredSound: SoundType = 'default') {
     const Notifications = getNotifications();
     if (!Notifications) return false;
 
     if (Platform.OS === 'android') {
         try {
-            await Notifications.setNotificationChannelAsync('adhan-channel', {
-                name: 'Ezan Vakti',
+            // Delete old channel if exists to ensure clean slate or manage multiple channels
+            // For simplicity, we define channel ID based on sound
+            const channelId = `adhan-channel-${preferredSound}`;
+
+            await Notifications.setNotificationChannelAsync(channelId, {
+                name: `Ezan Vakti (${preferredSound})`,
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 250, 250, 250],
                 lightColor: '#FF231F7C',
-                sound: 'default',
+                // For custom sounds, they need to be in android/app/src/main/res/raw/
+                // Expo handles assets differently during dev vs build.
+                // If 'default', use null or 'default'.
+                sound: preferredSound === 'default' ? 'default' : preferredSound + '.wav',
             });
+
+            // Also ensure default exists for fallbacks
+            if (preferredSound !== 'default') {
+                await Notifications.setNotificationChannelAsync('adhan-channel-default', {
+                    name: 'Ezan Vakti (Default)',
+                    importance: Notifications.AndroidImportance.MAX,
+                    sound: 'default',
+                });
+            }
+
         } catch (e) {
             console.warn("Notification Channel creation failed:", e);
         }
@@ -85,14 +103,20 @@ export async function scheduleTestNotification() {
         return;
     }
 
+    // Get current sound setting
+    const currentSound = useSettingsStore.getState().notificationSound;
+    const channelId = Platform.OS === 'android' ? `adhan-channel-${currentSound}` : undefined;
+    const soundName = currentSound === 'default' ? 'default' : currentSound + '.wav';
+
     try {
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Ezan Vakti Test 📢",
                 body: "Bu bir test bildirimidir. Ezan okunuyor...",
-                sound: 'default',
+                sound: soundName, // iOS uses this
             },
             trigger: null,
+            ...(Platform.OS === 'android' ? { channelId: channelId } : {}), // Android uses channel
         });
     } catch (e) {
         console.error("Test notification failed:", e);
@@ -103,6 +127,11 @@ export async function scheduleTestNotification() {
 export async function scheduleDailyPrayers(timings: Record<string, string>) {
     const Notifications = getNotifications();
     if (!Notifications) return;
+
+    // Get settings
+    const currentSound = useSettingsStore.getState().notificationSound;
+    const channelId = Platform.OS === 'android' ? `adhan-channel-${currentSound}` : undefined;
+    const soundName = currentSound === 'default' ? 'default' : currentSound + '.wav';
 
     try {
         await Notifications.cancelAllScheduledNotificationsAsync();
@@ -124,12 +153,13 @@ export async function scheduleDailyPrayers(timings: Record<string, string>) {
                 content: {
                     title: p.label,
                     body: `Ezan vakti geldi: ${timeStr} 🕌`,
-                    sound: 'default',
+                    sound: soundName,
                 },
                 trigger: {
                     type: Notifications.SchedulableTriggerInputTypes.DAILY,
                     hour,
                     minute,
+                    channelId: channelId, // Only effective on Android if channel matches
                 },
             });
         }
@@ -137,3 +167,4 @@ export async function scheduleDailyPrayers(timings: Record<string, string>) {
         console.error("Scheduling failed:", e);
     }
 }
+

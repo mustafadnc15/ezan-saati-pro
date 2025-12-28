@@ -58,7 +58,16 @@
           "iosAppId": "ca-app-pub-7272302945895997~5157603030"
         }
       ],
-      "./plugins/withGoogleMaps"
+      "./plugins/withGoogleMaps",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/adhan.wav",
+            "./assets/sounds/bismillah.wav"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

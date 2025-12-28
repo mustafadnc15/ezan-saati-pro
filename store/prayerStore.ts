@@ -11,11 +11,13 @@ interface Coords {
 interface PrayerState {
     prayerData: PrayerData | null;
     location: Coords | null;
+    city: string | null;
     qiblaAngle: number;
     loading: boolean;
     error: string | null;
 
     setLocation: (coords: Coords) => void;
+    setCity: (city: string) => void;
     fetchData: () => Promise<void>;
     calculateQiblaAngle: (coords: Coords) => number;
 }
@@ -30,8 +32,11 @@ export const usePrayerStore = create<PrayerState>()(
         (set, get) => ({
             prayerData: null,
             location: null,
+            city: null,
             qiblaAngle: 0,
             loading: false,
+
+            setCity: (city: string) => set({ city }),
             error: null,
 
             calculateQiblaAngle: (coords: Coords) => {

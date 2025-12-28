@@ -25,7 +25,7 @@ const PRAYER_NAMES_TR: Record<string, string> = {
 const ORDERED_PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export default function HomeScreen() {
-  const { prayerData, location, loading, error, setLocation, fetchData } = usePrayerStore();
+  const { prayerData, location, city, loading, error, setLocation, setCity, fetchData } = usePrayerStore();
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; remaining: string } | null>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
 
@@ -49,6 +49,23 @@ export default function HomeScreen() {
 
       let location = await Location.getCurrentPositionAsync({});
       setLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+
+      // Get City Name
+      try {
+        const reverseGeocode = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        });
+
+        if (reverseGeocode.length > 0) {
+          const address = reverseGeocode[0];
+          const cityName = address.city || address.subregion || address.region || "Bilinmiyor";
+          setCity(cityName);
+        }
+      } catch (e) {
+        console.log("Reverse geocode failed", e);
+      }
+
       await fetchData();
     })();
   }, []);
@@ -153,7 +170,7 @@ export default function HomeScreen() {
             <View>
               <Text className="text-gray-300 text-sm font-medium">Konumun</Text>
               <Text className="text-white text-xl font-bold">
-                {location ? `${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}` : 'Konum Bekleniyor...'}
+                {city ? city : (location ? 'Konum Alındı' : 'Konum Bekleniyor...')}
               </Text>
             </View>
             <View>
