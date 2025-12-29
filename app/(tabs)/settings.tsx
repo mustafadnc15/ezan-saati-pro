@@ -1,26 +1,62 @@
+import { registerForPushNotificationsAsync, scheduleTestNotification } from '@/services/notifications';
 import { SoundType, useSettingsStore } from '@/store/settingsStore';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Audio } from 'expo-av';
+import React, { useEffect, useState } from 'react';
+import { Text, TouchableOpacity, Vibration, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-/*
-  Since we don't have direct access to 'scheduleDailyPrayers' from here efficiently without passing data,
-  we might need to export the scheduling logic or trigger it. 
-  For now, we'll just update the store. The scheduling logic should ideally react to store changes 
-  or be called explicitly. We'll verify this linkage.
-*/
-import { registerForPushNotificationsAsync } from '@/services/notifications';
 
 export default function SettingsScreen() {
     const { notificationSound, setNotificationSound } = useSettingsStore();
+    const [sound, setSound] = useState<Audio.Sound | null>(null);
 
-    const handleSoundChange = async (sound: SoundType) => {
-        setNotificationSound(sound);
+    // Cleanup sound on unmount
+    useEffect(() => {
+        return () => {
+            if (sound) {
+                sound.unloadAsync();
+            }
+        };
+    }, [sound]);
+
+    const playPreview = async (type: SoundType) => {
+        try {
+            // Stop previous sound
+            if (sound) {
+                await sound.unloadAsync();
+            }
+
+            let source;
+            switch (type) {
+                case 'adhan':
+                    source = require('../../assets/sounds/adhan.wav');
+                    break;
+                case 'bismillah':
+                    source = require('../../assets/sounds/bismillah.wav');
+                    break;
+                case 'default':
+                default:
+                    setSound(null);
+                    return;
+            }
+
+            if (source) {
+                const { sound: newSound } = await Audio.Sound.createAsync(source);
+                setSound(newSound);
+                await newSound.playAsync();
+            }
+        } catch (error) {
+            console.log("Error playing preview:", error);
+        }
+    };
+
+    const handleSoundChange = async (newSound: SoundType) => {
+        setNotificationSound(newSound);
+        Vibration.vibrate(50); // Feedback
+        playPreview(newSound);
+
         // Re-register channels and potentially reschedule
-        await registerForPushNotificationsAsync(sound);
-        // Note: Actual rescheduling of notifications needs prayer times. 
-        // Ideally we'd trigger a reschedule here if we had the data.
+        await registerForPushNotificationsAsync(newSound);
     };
 
     const options: { label: string; value: SoundType }[] = [
@@ -65,6 +101,14 @@ export default function SettingsScreen() {
                     <Text className="text-gray-500 text-xs mt-2 ml-1">
                         * Bildirim sesi değişikliği için bildirim izni gereklidir.
                     </Text>
+
+                    <TouchableOpacity
+                        onPress={() => scheduleTestNotification()}
+                        className="mt-4 bg-teal-500/20 border border-teal-500/50 p-4 rounded-xl flex-row items-center justify-center"
+                    >
+                        <FontAwesome name="paper-plane" size={16} color="#2dd4bf" style={{ marginRight: 8 }} />
+                        <Text className="text-teal-300 font-semibold">Seçili Sesi Test Et (Bildirim Gönder)</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Other Settings placeholders */}

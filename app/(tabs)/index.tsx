@@ -1,14 +1,16 @@
-import AdBanner from '@/components/AdBanner';
 import { registerForPushNotificationsAsync } from '@/services/notifications';
 import { usePrayerStore } from '@/store/prayerStore';
-import { differenceInSeconds, isAfter } from 'date-fns';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { differenceInSeconds, format, isAfter } from 'date-fns';
+import { tr } from 'date-fns/locale';
 import { Audio } from 'expo-av';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
-import { useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, ImageBackground, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 /* 
   Turkish Prayer Names Mapping
   Aladhan keys: Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha
@@ -29,12 +31,9 @@ export default function HomeScreen() {
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; remaining: string } | null>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
 
-  // Focus effect to refresh logic if needed
-  useFocusEffect(
-    React.useCallback(() => {
-      // Optional: refresh logic
-    }, [])
-  );
+  // Date formatting
+  const today = new Date();
+  const dateStr = format(today, 'd MMMM EEEE', { locale: tr });
 
   // Request Permission & Fetch
   useEffect(() => {
@@ -92,29 +91,6 @@ export default function HomeScreen() {
     };
   }, [sound]);
 
-  async function playAdhanSound() {
-    try {
-      // Uncomment this line when you have the file:
-      const { sound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/adhan.wav')
-      );
-      setSound(sound);
-      await sound.playAsync();
-
-      // Stop after 20 seconds (User request: reduce duration)
-      setTimeout(async () => {
-        if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-        }
-      }, 20000);
-
-    } catch (error) {
-      console.log("Sound play error", error);
-      alert("Ezan sesi çalınamadı: " + (error as any).message);
-    }
-  }
-
   const updateTimer = () => {
     if (!prayerData) return;
 
@@ -147,7 +123,7 @@ export default function HomeScreen() {
       setNextPrayer({
         name: 'Fajr',
         time: timings.Fajr.split(' ')[0],
-        remaining: 'Yarın'
+        remaining: 'Yarın' // Simplified logic for next day
       });
     }
   };
@@ -160,46 +136,84 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <LinearGradient
-        colors={['#0f766e', '#1e293b']}
+    <View style={{ flex: 1 }} className="bg-gray-900">
+      <ImageBackground
+        source={require('@/assets/images/main-screen-image.png')}
         style={{ flex: 1 }}
+        contentFit="cover"
       >
-        <SafeAreaView style={{ flex: 1 }} className="px-6 pt-4">
-          <View className="flex-row justify-between items-center mb-6">
-            <View>
-              <Text className="text-gray-300 text-sm font-medium">Konumun</Text>
-              <Text className="text-white text-xl font-bold">
-                {city ? city : (location ? 'Konum Alındı' : 'Konum Bekleniyor...')}
+        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+          {/* HEADER SECTION */}
+          <View className="items-center mt-4 mb-2">
+            {/* Location Pill */}
+            <BlurView intensity={30} tint="light" className="overflow-hidden rounded-full mb-3 px-4 py-1.5 flex-row items-center border border-white/30">
+              <FontAwesome name="map-marker" size={14} color="#0f766e" style={{ marginRight: 6 }} />
+              <Text className="text-gray-800 font-bold text-xs uppercase tracking-wider">
+                {city ? city.toUpperCase() : (location ? 'KONUM ALINIYOR...' : 'KONUM BEKLENİYOR')}
               </Text>
-            </View>
-            <View>
-              <Text className="text-gray-300 text-sm text-right">Hicri</Text>
-              <Text className="text-white text-lg font-bold text-right">
-                {prayerData?.date.hijri.day} {prayerData?.date.hijri.month.en} {prayerData?.date.hijri.year}
-              </Text>
-            </View>
-          </View>
+            </BlurView>
 
-          <View className="items-center justify-center py-10">
-            <Text className="text-teal-200 text-lg font-semibold mb-2">Sıradaki Vakit</Text>
-            <Text className="text-white text-5xl font-extrabold tracking-widest">
-              {nextPrayer ? PRAYER_NAMES_TR[nextPrayer.name] : '...'}
+            {/* City Title */}
+            <Text className="text-gray-800 text-5xl font-bold tracking-tight mb-2 drop-shadow-sm">
+              {city || '...'}
             </Text>
-            <View className="mt-4 bg-white/10 px-6 py-3 rounded-full border border-white/20">
-              <Text className="text-3xl text-white font-mono font-bold">
-                {nextPrayer?.remaining || '--:--:--'}
+
+            {/* Date Info */}
+            <View className="flex-row items-center mb-4">
+              <FontAwesome name="calendar" size={14} color="#4b5563" style={{ marginRight: 6 }} />
+              <Text className="text-gray-600 font-medium text-base">
+                {dateStr}
+              </Text>
+            </View>
+
+            {/* Hijri Date Pill */}
+            <View className="bg-white/40 px-3 py-1 rounded-lg border border-white/50">
+              <Text className="text-gray-700 font-medium text-xs">
+                {prayerData ? `${prayerData.date.hijri.day} ${prayerData.date.hijri.month.en} ${prayerData.date.hijri.year}` : '...'}
               </Text>
             </View>
           </View>
 
-          <View className="flex-1 mt-6">
-            {loading ? (
-              <ActivityIndicator size="large" color="#ffffff" />
-            ) : error ? (
-              <Text className="text-red-400 text-center">{error}</Text>
-            ) : (
-              <View className="bg-white/10 rounded-3xl p-4 border border-white/5 backdrop-blur-md">
+          {/* SPACER for Main Visual (Mosque in BG) */}
+          <View className="flex-1" />
+
+          {/* FLOATING TIMER CARD */}
+          <View className="items-center mb-8 mx-6">
+            <BlurView intensity={60} tint="light" className="w-full overflow-hidden rounded-3xl p-6 border border-white/60 items-center shadow-lg">
+              <Text className="text-gray-500 font-bold tracking-widest text-xs mb-1 uppercase">
+                SIRADAKİ VAKİT: {nextPrayer ? PRAYER_NAMES_TR[nextPrayer.name].toUpperCase() : '...'}
+              </Text>
+
+              <View className="flex-row items-center justify-center mt-1">
+                <FontAwesome name="clock-o" size={20} color="#0f766e" style={{ marginRight: 8 }} />
+                <Text className="text-teal-700 text-4xl font-mono font-bold tracking-wider">
+                  {nextPrayer?.remaining || '--:--:--'}
+                </Text>
+              </View>
+            </BlurView>
+          </View>
+
+          {/* BOTTOM SHEET / PANEL */}
+          <View className="bg-white rounded-t-[36px] pt-6 pb-8 px-6 shadow-2xl h-[35%]">
+
+            {/* Sheet Header */}
+            <View className="flex-row justify-between items-center mb-6">
+              <View className="flex-row items-center">
+                <FontAwesome name="clock-o" size={20} color="#0f766e" style={{ marginRight: 8 }} />
+                <Text className="text-xl font-bold text-gray-800">Namaz Vakitleri</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/settings')}>
+                <FontAwesome name="bell" size={20} color="#4b5563" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Loading State */}
+            {loading && <ActivityIndicator size="small" color="#0f766e" />}
+            {error && <Text className="text-red-500 text-center text-sm">{error}</Text>}
+
+            {/* Prayer Times Horizontal Scroll */}
+            {!loading && !error && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
                 {ORDERED_PRAYERS.map((key) => {
                   const time = prayerData?.timings[key as keyof typeof prayerData.timings]?.split(' ')[0];
                   const isNext = nextPrayer?.name === key;
@@ -207,33 +221,52 @@ export default function HomeScreen() {
                   return (
                     <View
                       key={key}
-                      className={`flex-row justify-between items-center py-4 px-4 border-b border-white/10 last:border-0 ${isNext ? 'bg-teal-500/20 rounded-xl' : ''}`}
+                      className={`mr-3 rounded-2xl py-4 px-5 items-center justify-center min-w-[90px] ${isNext ? 'bg-teal-500 shadow-teal-500/30 shadow-lg' : 'bg-gray-50 border border-gray-100'}`}
                     >
-                      <Text className={`text-lg ${isNext ? 'text-teal-300 font-bold' : 'text-white font-medium'}`}>
+                      <Text className={`text-sm mb-1 font-medium ${isNext ? 'text-teal-50' : 'text-gray-400'}`}>
                         {PRAYER_NAMES_TR[key]}
                       </Text>
-                      <Text className={`text-xl ${isNext ? 'text-teal-300 font-bold' : 'text-gray-200'}`}>
-                        {time}
-                      </Text>
+                      <View className="flex-row items-center">
+                        {key === 'Sunrise' ? (
+                          <FontAwesome name="sun-o" size={14} color={isNext ? '#fff' : '#f59e0b'} style={{ marginRight: 4 }} />
+                        ) : (
+                          <FontAwesome name="moon-o" size={14} color={isNext ? '#fff' : '#6b7280'} style={{ marginRight: 4 }} />
+                        )}
+                        <Text className={`text-lg font-bold ${isNext ? 'text-white' : 'text-gray-800'}`}>
+                          {time}
+                        </Text>
+                      </View>
                     </View>
                   );
                 })}
-              </View>
+              </ScrollView>
             )}
-          </View>
 
+            {/* Bottom Actions Row */}
+            <View className="flex-row justify-between items-center mt-auto">
+              <TouchableOpacity
+                className="flex-row items-center bg-gray-100 px-5 py-3 rounded-full"
+                onPress={() => router.push('/qibla')}
+              >
+                <View className="bg-teal-500 rounded-full w-6 h-6 items-center justify-center mr-2">
+                  <FontAwesome name="compass" size={12} color="white" />
+                </View>
+                <Text className="font-bold text-gray-700">Kıble</Text>
+              </TouchableOpacity>
 
+              {/* Menu / Settings Button */}
+              <TouchableOpacity
+                className="bg-gray-800 w-12 h-12 rounded-full items-center justify-center shadow-lg"
+                onPress={() => router.push('/settings')}
+              >
+                <FontAwesome name="th-large" size={18} color="white" />
+              </TouchableOpacity>
+            </View>
 
-
-
-
-
-          <View className="mb-6">
-            <AdBanner />
           </View>
 
         </SafeAreaView>
-      </LinearGradient>
+      </ImageBackground>
     </View>
   );
 }
